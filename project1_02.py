@@ -2,28 +2,20 @@ from pathlib import Path
 
 
 
-def print_d(mypath):
-	a = []
+def my_d(mypath: Path) -> list:
 	for x in mypath.iterdir():
 		if x.is_file():
 			a.append(x)
 	b = sorted(a)
-	for x in b:
-		print(x)
-	'return-statement is necessary?'
 	return b
 
-def print_r(mypath):
-	a = print_d(mypath)
+def my_r(mypath: Path) -> list:
+	my_d(mypath)
 	for x in mypath.iterdir():
 		if x.is_dir():
-			a.append(x)
-	for x in a:
-		if x.is_dir():
-			print_r(x)
+			my_r(mypath)
 	b = sorted(a)
-	print(b)
-	return b	
+	return b
 
 def print_a(b):
 	for x in b:
@@ -40,9 +32,12 @@ def main_menu():
 			print("Match the rule")
 			myloop = False
 			if myinput[0] == 'D':
-				return print_d(mypath)
+				mylist = my_d(mypath)
+				for x in mylist:
+					print(x)
+				return mylist
 			elif myinput[0] == 'R':
-				return print_r(mypath)
+				return my_r(mypath)
 		else:
 			print("ERROR")
 	print("out of while loop, thanks.")
@@ -52,7 +47,7 @@ def second_menu(b):
 	while myloop:
 		myinput = input('Enter your second input. Q ANET<> and space+, that is enough at this time ')
 		mystring = myinput[2:]
-		if ((myinput.startswith('A') or myinput.startswith('N') or myinput.startswith('E') or myinput.startswith('T') or myinput.startswith('<') or myinput.startswith('>')) and(len(myinput)>2) and (myinput[1] == ' ')):
+		if ((myinput.startswith('A') or myinput.startswith('N') or myinput.startswith('E') or myinput.startswith('T') or myinput.startswith('<') or myinputstartswith('>')) and(len(myinput)>2) and (myinput[1] == ' ')):
 			print("Match the rule")
 			myloop = False
 			if myinput[0] == 'A':
@@ -74,5 +69,6 @@ def second_menu(b):
 	
 
 if __name__ == '__main__':
+	a = []
 	maininput = main_menu()
-	second_menu(maininput)
+#	second_menu(maininput)

@@ -2,28 +2,30 @@ from pathlib import Path
 
 
 
-def print_d(mypath):
-	a = []
+def print_d(mypath: Path) -> list:
+	temp = []
 	for x in mypath.iterdir():
 		if x.is_file():
-			a.append(x)
-	b = sorted(a)
+			temp.append(x)
+	b = sorted(temp)
+	print('here below is print(x) in print_d')
 	for x in b:
 		print(x)
 	'return-statement is necessary?'
 	return b
 
-def print_r(mypath):
-	a = print_d(mypath)
-	for x in mypath.iterdir():
+def print_r(mypath: Path) -> list:
+	a.extend(print_d(mypath))
+	print('print_d funtion worked')
+	for x in sorted(mypath.iterdir()):
 		if x.is_dir():
-			a.append(x)
-	for x in a:
-		if x.is_dir():
+			print('this is RECURSIVE')
 			print_r(x)
-	b = sorted(a)
-	print(b)
-	return b	
+#	b = sorted(a)
+	print('here below is print(x) in print_r')
+	for x in a:
+		print(x)
+	return a
 
 def print_a(b):
 	for x in b:
@@ -74,5 +76,6 @@ def second_menu(b):
 	
 
 if __name__ == '__main__':
+	a = []
 	maininput = main_menu()
 	second_menu(maininput)
