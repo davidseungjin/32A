@@ -1,5 +1,7 @@
 from pathlib import Path
 from os.path import getsize
+from shutil import copy
+
 
 def print_d(mypath: Path) -> list:
 	temp = []
@@ -88,6 +90,31 @@ def print_lt(myint: int) -> list:
 			print(x)
 	return mylist
 
+def f_check(mylist: list) -> None:
+	for x in mylist:
+#		print('============')
+#		print('before opening file')
+		the_file = open(x, 'r')
+#		print('before assigning readline of file')
+		line = the_file.readline()
+		line = line[:-1]
+#		print('before printing file')
+		print(line)
+#		print('before closing file')
+		the_file.close()
+
+def d_check(mylist: list) -> None:
+	for x in mylist:
+#		print('xxxxxxx')
+#		print(x)
+		y = str(x) + ".dup"
+#		print('yyyyyyy')
+		print(y)
+		z = Path(y)
+		print('zzzzzzz')
+		copy(x, y)
+		
+
 
 def main_menu() -> list:
 	myloop = True
@@ -140,10 +167,33 @@ def second_menu(b: list) -> list:
 				return gt
 		else:
 			print("ERROR")
-	
+			'This is possible?'
+#			return None David: you should not use this because it will effect of exiting loop
+
+def third_menu(b: list) -> None:
+	myloop = True
+	while myloop:
+		myinput = input('')
+		if ((myinput == 'F') or (myinput == 'D') or (myinput == 'T')):
+			myloop = False
+			if myinput == 'F':
+#				print('input F')
+				f_check(b)
+			elif myinput == 'D':
+				print('input D')
+				d_check(b)
+			elif myinput == 'T':
+				print('input T')
+		else:
+			print("ERROR")
+
+		
 
 if __name__ == '__main__':
 	a = []
-	maininput = main_menu()
-	second_menu(maininput)
+	myfirstmenu = main_menu()
+	mysecondmenu = second_menu(myfirstmenu)
 
+	third_menu(mysecondmenu)
+
+	

@@ -1,5 +1,7 @@
 from pathlib import Path
 from os.path import getsize
+from shutil import copy
+
 
 def print_d(mypath: Path) -> list:
 	temp = []
@@ -7,20 +9,13 @@ def print_d(mypath: Path) -> list:
 		if x.is_file():
 			temp.append(x)
 	b = sorted(temp)
-#	for x in b:
-#		print(x)
-#	'return-statement is necessary?'
 	return b
 
 def print_r(mypath: Path) -> list:
 	a.extend(print_d(mypath))
 	for x in sorted(mypath.iterdir()):
 		if x.is_dir():
-#			print('print_r function called')
 			print_r(x)
-#	for x in a:
-#		print('print x element in list a')
-#		print(x)
 	return a
 
 def print_a(b: list) -> list:
@@ -88,6 +83,22 @@ def print_lt(myint: int) -> list:
 			print(x)
 	return mylist
 
+def f_check(mylist: list) -> None:
+	for x in mylist:
+		the_file = open(x, 'r')
+		line = the_file.readline()
+		line = line[:-1]
+		print(line)
+		the_file.close()
+
+def d_check(mylist: list) -> None:
+	for x in mylist:
+		y = str(x) + ".dup"
+		copy(x, y)
+
+def t_check(mylist: list) -> None:
+	for x in mylist:
+		x.touch()
 
 def main_menu() -> list:
 	myloop = True
@@ -106,7 +117,6 @@ def main_menu() -> list:
 				return r
 		else:
 			print("ERROR")
-#	print("out of while loop, thanks.")
 	
 def second_menu(b: list) -> list:
 	myloop = True
@@ -140,10 +150,29 @@ def second_menu(b: list) -> list:
 				return gt
 		else:
 			print("ERROR")
-	
+			'This is possible?'
+
+def third_menu(b: list) -> None:
+	myloop = True
+	while myloop:
+		myinput = input('')
+		if ((myinput == 'F') or (myinput == 'D') or (myinput == 'T')):
+			myloop = False
+			if myinput == 'F':
+				f_check(b)
+			elif myinput == 'D':
+				print('input D')
+				d_check(b)
+			elif myinput == 'T':
+				print('input T')
+				t_check(b)
+		else:
+			print("ERROR")
 
 if __name__ == '__main__':
 	a = []
-	maininput = main_menu()
-	second_menu(maininput)
+	myfirstmenu = main_menu()
+	mysecondmenu = second_menu(myfirstmenu)
+
+	third_menu(mysecondmenu)
 

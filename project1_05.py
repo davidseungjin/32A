@@ -16,7 +16,7 @@ def print_r(mypath: Path) -> list:
 	a.extend(print_d(mypath))
 	for x in sorted(mypath.iterdir()):
 		if x.is_dir():
-#			print('print_r function called')
+			print('print_r function called')
 			print_r(x)
 #	for x in a:
 #		print('print x element in list a')
@@ -33,6 +33,7 @@ def print_n(mystring: str) -> list:
 	for x in a:
 		if x.name == mystring:
 			mylist.append(x)
+			print(x)
 	return mylist
 
 def print_e(mystring: str) -> list:
@@ -92,7 +93,7 @@ def print_lt(myint: int) -> list:
 def main_menu() -> list:
 	myloop = True
 	while myloop:
-		myinput = input('')
+		myinput = input('Enter your input. for test, "D /Users" match it  ')
 		mypath = Path(myinput[2:])
 		if ((myinput.startswith('D') or myinput.startswith('R')) and(len(myinput)>2) and (myinput[1] == ' ') and (mypath.exists())):
 			myloop = False
@@ -111,7 +112,7 @@ def main_menu() -> list:
 def second_menu(b: list) -> list:
 	myloop = True
 	while myloop:
-		myinput = input('')
+		myinput = input('Enter your second input. Q ANET<> and space+, that is enough at this time ')
 		mystring = myinput[2:]
 		if myinput == 'A':
 			myloop = False
@@ -119,27 +120,18 @@ def second_menu(b: list) -> list:
 		elif ((myinput.startswith('N') or myinput.startswith('E') or myinput.startswith('T') or myinput.startswith('<') or myinput.startswith('>')) and(len(myinput)>2) and (myinput[1] == ' ')):
 			myloop = False
 			if myinput[0] == 'N':
-				n = print_n(mystring)
-				print_a(n)
-				return n
+				print_n(mystring)
 			elif myinput[0] == 'E':
-				e = print_e(mystring)
-				print_a(e)
-				return e
+				print_e(mystring)
 			elif myinput[0] == 'T':
-				t = print_t(mystring)
-				print_a(t)
-				return t
+				print_t(mystring)
 			elif myinput[0] == '<':
-				lt = print_lt(int(mystring))
-				print_a(lt)
-				return lt
+				print_lt(int(mystring))
 			elif myinput[0] == '>':
-				gt = print_gt(int(mystring))
-				print_a(gt)
-				return gt
+				print_gt(int(mystring))
 		else:
 			print("ERROR")
+#	print("out of while loop, thanks.")
 	
 
 if __name__ == '__main__':
