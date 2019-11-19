@@ -24,7 +24,6 @@ def store_dict_into_json_file(mydict: dict) -> None:
 	with open("./myjson.json", 'w') as myjson:
 		myjson.write(json.dumps(mycontent))
 
-
 def create_hash_keys_of_dates_for_cal(mydict: dict) -> list:
 	mylist = []
 	for i in mydict['Time Series (Daily)'].keys():
@@ -44,11 +43,11 @@ def find_the_length_of_dates(mystartdate: str, myenddate: str) -> int:
 	return start_index, end_index, (start_index - end_index + 1)
 
 
-def result_outcome() -> None:
+def result_outcome(myoption) -> None:
 	print('Date\tOpen\tHigh\tLow\tClose\tVolume\tIndicator\tBuy?\tSell')
 	for i in range(mystartindex, (myendindex-1), -1):
-
-		indicator, buy, sell = run_indicator(myoption(myoption), i)
+		# print('myoption is ', myoption)
+		indicator, buy, sell = run_indicator(my_option(myoption), i)
 
 		print('%s\t%.4f\t%.4f\t%.4f\t%.4f\t%d\t%s\t%s\t%s'%
 			(mydatelist[i], 
@@ -60,15 +59,10 @@ def result_outcome() -> None:
 				indicator, buy, sell
 				))
 
-def myoption():
+def my_option(myoption) -> 'Class':
 	if myoption == 'TR':
-		print('TR?????')
-		myoption = TR(self)
-		print(myoption)
-		print(type(myoption))
-		return myoption
+		return TR()
 	if myoption == 'MP':
-		print('MP?????')
 		return MP()
 	if myoption == 'MV':
 		return MV()
@@ -101,18 +95,24 @@ class TR:
 				temp = yesterday_close - today_low
 			elif (yesterday_close <= today_low):
 				temp = today_high - yesterday_close
-			self._truevalue = temp / yesterday_close
-			self._indicator = '%.2f'%(self._truevalue*100) + '%'
+			self._truevalue = temp / yesterday_close * 100
+			self._indicator = '%.2f'%(self._truevalue) + '%'
 		return self._indicator
 	def cal_buy(self, myindex):
 		self._buy = '\t'
-		if((self._truevalue) <= mybuy):
-			self._buy = 'BUY'
+		if((mystartindex - myindex) < 1):
+			return self._buy	
+		else:
+			if((self._truevalue) < float(mybuy[1:])):
+				self._buy = 'BUY'
 		return self._buy
 	def cal_sell(self, myindex):
 		self._sell = '\t'
-		if(self._truevalue <= mysell):
-			self._sell = 'SELL'
+		if((mystartindex - myindex) < 1):
+			return self._sell
+		else:
+			if(self._truevalue > float(mysell[1:])):
+				self._sell = 'SELL'
 		return self._sell
 
 
@@ -123,8 +123,6 @@ class MP:
 		elif ((mystartindex - myindex) >= (my_cal_length-1)):
 			temp = 0
 			prev_temp = 0
-			buy_signal = ''
-			sell_signal = ''
 			for i in range(myindex+9, (myindex - 1), -1):
 				temp += float(mydict['Time Series (Daily)'][mydatelist[i]]['4. close'])
 				prev_temp += float(mydict['Time Series (Daily)'][mydatelist[i+1]]['4. close'])
@@ -206,14 +204,14 @@ class DP:
 		self._buy = '\t'
 		if  ((mystartindex - myindex) < (my_cal_length-1)):
 			return self._buy
-		if self._indicator > mybuy:
+		if self._indicator > int(mybuy):
 			self._buy = 'BUY'
 		return self._buy
 	def cal_sell(self, myindex):
 		self._sell = '\t'
 		if  ((mystartindex - myindex) < (my_cal_length-1)):
 			return self._sell
-		if self._indicator < mysell:
+		if self._indicator < int(mysell):
 			self._sell = 'SELL'
 		return self._sell
 
@@ -234,18 +232,16 @@ class DV:
 		self._buy = '\t'
 		if  ((mystartindex - myindex) < (my_cal_length-1)):
 			return self._buy
-		if self._indicator > mybuy:
+		if self._indicator > int(mybuy):
 			self._buy = 'BUY'
 		return self._buy
 	def cal_sell(self, myindex):
 		self._sell = '\t'
 		if  ((mystartindex - myindex) < (my_cal_length-1)):
 			return self._sell
-		if self._indicator < mysell:
+		if self._indicator < int(mysell):
 			self._sell = 'SELL'
 		return self._sell
-
-
 
 
 if __name__ == '__main__':
@@ -254,18 +250,26 @@ if __name__ == '__main__':
 	mystartdate = input('start date, YYYY-MM-DD ')
 	myenddate = input('end date, YYYY-MM-DD ')
 	mycommand = input('input your command ')
-	myoption = mycommand[:2]
+	mycommand_list = mycommand.split(' ')
 
+
+	if mycommand.startswith('TR'):
+		myoption = mycommand_list[0]
+		mybuy = mycommand_list[1]
+		mysell = mycommand_list[2]
+	else:
+		myoption = mycommand_list[0]
+		my_cal_length = int(mycommand_list[1])
+		mybuy = mycommand_list[2]
+		mysell = mycommand_list[3]
+	
 	mydict = pull_web_n_store_into_dict(mysymbol, api_key)
 	mydatelist = create_hash_keys_of_dates_for_cal(mydict)
 
 	mystartindex, myendindex, mydatelength = find_the_length_of_dates(mystartdate, myenddate)
 	
-	my_cal_length = 10
-	mybuy = 0.05
-	mysell = -0.05
 
-	result_outcome()
+	result_outcome(myoption)
 
 	
 	
