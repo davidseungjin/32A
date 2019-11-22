@@ -108,7 +108,7 @@ def run_calcs(calcs: ['Calc'], starting_value):
 # you think its outcome should be.
 #
 
-a = run_calcs([SquareCalc()], 4)
+a = run_calcs([SquareCalc(), SquareCalc()], 4)
 print(a)
 #     run_calcs([LengthCalc(), MultiplyByCalc(2)], 'Boo')
 
