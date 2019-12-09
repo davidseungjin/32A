@@ -71,12 +71,15 @@ class AdventureGame:
     def _startandfalling(self, _player):
         if _player._row == 0:  # and one more condition: not landed, not blocked
             print('_player._row == 0')
+            _player.natural_falling()
             pass
-        if _player._row == 1:  # and one more condition: not landed, not blocked
+        elif _player._row == 1:  # and one more condition: not landed, not blocked
             print('_player._row == 1')
+            _player.natural_falling()
             pass
-        if 2 <= _player._row < self._row:  # and one more condition: not landed, not blocked
+        elif 2 <= _player._row < self._row:  # and one more condition: not landed, not blocked
             print('_player._row >= 2')
+            _player.natural_falling()
             pass
 
     def _draw_grid(self):

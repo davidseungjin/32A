@@ -1,131 +1,175 @@
 import pygame
 import random
 
+pygame.font.init()
+
 # GLOBALS VARS
+s_width = 800
+s_height = 700
 play_width = 300  # meaning 300 // 10 = 30 width per block
-play_height = 650  # meaning 600 // 20 = 20 height per block
+play_height = 650  # meaning 600 // 20 = 30 height per block
 block_size = 50
-num_row = play_height // block_size
-num_column = play_width // block_size
 
-top_left_x = 0
-top_left_y = 0
-background_color = (0, 0, 0)
-_BACKGROUND_COLOR = pygame.Color(0, 0, 0)
-shape_colors = {'c1': (0, 255, 0), 'c2': (255, 0, 0), 'c3': (0, 255, 255),
-                'c4': (255, 255, 0), 'c5': (255, 165, 0), 'c6': (0, 0, 255), 'c0': (128, 0, 128)}
+top_left_x = (s_width - play_width) // 2
+top_left_y = s_height - play_height
 
-_COLORS = random.sample(shape_colors.keys(), 3)
-_COLUMN = random.sample(range(num_column), 1)[0]
+_COLORS = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 165, 0), (0, 0, 255), (128, 0, 128)]
 
-class Piece:
-    print('_COLUMN is ', _COLUMN)
-    print('_COLORS[0] is ', shape_colors[_COLORS[0]])
-    print('_COLORS[1] is ', shape_colors[_COLORS[1]])
+
+class Piece(object):
     def __init__(self):
         self.x = 0
-        self.y = _COLUMN
-        self.c0 = shape_colors[_COLORS[0]]
-        self.c1 = shape_colors[_COLORS[1]]
-        self.c2 = shape_colors[_COLORS[2]]
-        self._is_frozen = False
-        self._is_done = False
+        self.y = random.sample(range(6),1)[0]
+        self.x_m = self.x - 1
+        self.x_t = self.x_m - 1
+        self.color0 = random.sample(_COLORS, 1)[0]
+        self.color1 = random.sample(_COLORS, 1)[0]
+        self.color2 = random.sample(_COLORS, 1)[0]
+        self.rotation = 0
 
 
-class Columngame:
-    def __init__(self):
-        self._running = True
+def create_grid(locked_pos={}):  # *
+    grid = [[(0,0,0) for _ in range(6)] for _ in range(13)]
 
-    def _create_surface(self, size: (play_width, play_height)) -> None:
-        self._surface = pygame.display.set_mode(size)
-    def _fill_board(self):
-        self._surface.fill(_BACKGROUND_COLOR)
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            if (j, i) in locked_pos:
+                c = locked_pos[(j,i)]
+                grid[i][j] = c
+    return grid
 
-    def create_grid(self):
-        grid = [[background_color for x in range(num_column)] for x in range(num_row)]
 
-        print('the function "create_grid"')
-        self._grid = grid
-        print(self._grid)
-        # return grid
+def get_position(shape):
+    positions = [(shape.y, shape.x), (shape.y, shape.x_m), (shape.y, shape.x_t)]
+    return positions
 
-    def draw_window(self):
-        print('the function "draw_window"')
-        self.surface_background = pygame.Surface(self._surface.get_size())
-        self.surface_background.fill(background_color)
-        # for i in range(num_row):
-        #     for j in range(num_column):
-        #         pygame.draw.rect(self._surface, self._grid[i][j], (top_left_x + j * block_size, top_left_y + i * block_size, block_size, block_size), 0)
 
-        # draw grid and border
-        # self.draw_grid()
-        # pygame.draw.rect(self._surface, (255, 0, 0), (top_left_x, top_left_y, play_width, play_height), 5)
+def valid_space(shape, grid):
+    accepted_pos = [[(j, i) for j in range(6) if grid[i][j] == (0,0,0)] for i in range(13)]
+    accepted_pos = [j for sub in accepted_pos for j in sub]
+
+    formatted = get_position(shape)
+
+    for pos in formatted:
+        if pos not in accepted_pos:
+            if pos[1] > -1:
+                return False
+    return True
+
+def get_shape():
+    return Piece()
+
+def draw_grid(surface, grid):
+    sx = 0
+    sy = 0
+
+    for i in range(len(grid)):
+        pygame.draw.line(surface, (128,0,128), (sx, sy + i*block_size), (sx+play_width, sy+ i*block_size))
+        for j in range(len(grid[i])):
+            pygame.draw.line(surface, (128, 128, 128), (sx + j*block_size, sy),(sx + j*block_size, sy + play_height))
+
+def draw_window(surface, grid):
+    surface.fill((0, 0, 0))
+    sx = 0
+    sy = 0
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            pygame.draw.rect(surface, grid[i][j], (sx + j*block_size, sy + i*block_size, block_size, block_size), 0)
+
+    pygame.draw.rect(surface, (255, 0, 0), (sx, sy, play_width, play_height), 5)
+
+    draw_grid(surface, grid)
+    #pygame.display.update()
+
+def faller_rotate(faller):
+    temp = faller.color0
+    faller.color0 = faller.color1
+    faller.color1 = faller.color2
+    faller.color2 = temp
+
+def main(win):  # *
+    locked_positions = {}
+    grid = create_grid(locked_positions)
+
+    change_piece = False
+    run = True
+    current_piece = get_shape()
+    next_piece = get_shape()
+    clock = pygame.time.Clock()
+    fall_time = 0
+    fall_speed = 0.20
+    level_time = 0
+
+    while run:
+        grid = create_grid(locked_positions)
+        fall_time += clock.get_rawtime()
+        level_time += clock.get_rawtime()
+        clock.tick()
+
+        if level_time/1000 > 5:
+            level_time = 0
+            if level_time > 0.12:
+                level_time -= 0.005
+
+        if fall_time/1000 > fall_speed:
+            fall_time = 0
+            current_piece.x += 1
+            current_piece.x_m = current_piece.x - 1
+            current_piece.x_t = current_piece.x_m - 1
+            if not(valid_space(current_piece, grid)) and current_piece.x > 0:
+                current_piece.x -= 1
+                current_piece.x_m = current_piece.x - 1
+                current_piece.x_t = current_piece.x_m - 1
+                change_piece = True
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.display.quit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    current_piece.y -= 1
+                    if not(valid_space(current_piece, grid)):
+                        current_piece.y += 1
+                if event.key == pygame.K_RIGHT:
+                    current_piece.y += 1
+                    if not(valid_space(current_piece, grid)):
+                        current_piece.y -= 1
+                if event.key == pygame.K_SPACE:
+                    faller_rotate(current_piece)
+
+        shape_pos = get_position(current_piece)
+
+        if current_piece.x > -1:
+            grid[current_piece.x][current_piece.y] = current_piece.color2
+        if current_piece.x_m > -1:
+            grid[current_piece.x_m][current_piece.y] = current_piece.color1
+        if current_piece.x_t > -1:
+            grid[current_piece.x_t][current_piece.y] = current_piece.color0
+
+
+        if change_piece:
+            locked_positions[shape_pos[0]] = current_piece.color2
+            locked_positions[shape_pos[1]] = current_piece.color1
+            locked_positions[shape_pos[2]] = current_piece.color0
+            current_piece = next_piece
+            next_piece = get_shape()
+            change_piece = False
+
+        draw_window(win, grid)
         pygame.display.update()
 
-    def draw_grid(self):
-        print('the function "draw_grid"')
-        sx = top_left_x
-        sy = top_left_y
-        for i in range(num_row):
-            pygame.draw.line(self._surface, (128, 128, 128), (sx, sy + i * block_size),
-                             (sx + play_width, sy + i * block_size))  # horizontal lines
-            for j in range(num_column):
-                pygame.draw.line(self._surface, (128, 128, 128), (sx + j * block_size, sy),
-                                 (sx + j * 30, sy + play_height))  # vertical lines
+surface = pygame.display.set_mode((play_width, play_height))
 
-    def convert_shape_format(self):
-        temp = self.c0
-        self.c0 = self.c1
-        self.c1 = self.c2
-        self.c2 = temp
+run = True
+while run:
+    surface.fill((0,0,0))
+    pygame.display.update()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+        if event.type == pygame.KEYDOWN:
+            main(surface)
 
-    def valid_space(self, grid):
-        accepted_positions = [[(j, i) for j in range(num_column) if grid[i][j] == (0, 0, 0)] for i in range(num_row)]
-        accepted_positions = [j for sub in accepted_positions for j in sub]
-        formatted = convert_shape_format(shape)
-
-        for pos in formatted:
-            if pos not in accepted_positions:
-                if pos[1] > -1:
-                    return False
-
-        return True
-
-    def check_lost(self, positions):
-        for pos in positions:
-            x, y = pos
-            if y < 1:
-                return True
-        return False
-
-    def get_shape(self):
-        return Piece()
-
-    def run(self) -> None:
-        pygame.init()
-
-        try:
-            clock = pygame.time.Clock()
-
-            self._create_surface((play_width, play_height))
-            print(self._surface)
-            n = 0
-            self._fill_board()
-            print(self._surface.fill(_BACKGROUND_COLOR))
-            # self.create_grid()
-            # self.draw_window()
-            # self.draw_grid()
-
-            while self._running:
-                clock.tick(15)
-                print(n)
-                n += 1
-                # self._handle_events()
-                # self._create_frame()
-
-        finally:
-            pygame.quit()
-
-
-if __name__ == '__main__':
-    Columngame().run()
+pygame.display.quit()
