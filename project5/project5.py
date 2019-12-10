@@ -1,160 +1,137 @@
-import project5_faller as pm
+#######################################
+# Student ID    : 001037870
+# UCInetID      : seungl21
+# Name          : Seungjin Lee
+#######################################
+
 import pygame
-import random
+import project5_faller as pm
 
-# We'll define some global constants, to introduce names for what would
-# otherwise be "magic numbers" in our code.  Naming constant values with
-# something that says what they're going to be used for is a good habit
-# to get into.  (People read programs, and it helps if they understand
-# the "why" of those programs.)
+play_width = 300
+play_height = 650
+block_size = 50
+myline = (128, 128, 128)
+myviolet = (255, 0, 255)
 
-_FRAME_RATE = 1
-_LENGTH_ROW = 650
-_LENGTH_COLUMN = 300
-_NUM_ROW = 13
-_NUM_COLUMN = 6
-_UNIT_FRAC_COORDINATE_COLUMN = _LENGTH_COLUMN / _NUM_COLUMN
-_UNIT_FRAC_COORDINATE_ROW = _LENGTH_ROW / _NUM_ROW
+def create_grid(locked_pos={}):  # *
+    grid = [[(0,0,0) for _ in range(6)] for _ in range(13)]
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            if (j, i) in locked_pos:
+                c = locked_pos[(j,i)]
+                grid[i][j] = c
+    return grid
 
-_COLOR1 = pygame.Color(0, 0, 128)
-_COLOR2 = pygame.Color(0, 0, 64)
-_COLOR3 = pygame.Color(0, 128, 0)
-_COLOR4 = pygame.Color(0, 64, 0)
-_COLOR5 = pygame.Color(128, 0, 0)
-_COLOR6 = pygame.Color(64, 0, 0)
-_COLOR7 = pygame.Color(64, 64, 64)
-
-_BACKGROUND_COLOR = pygame.Color(0, 0, 0)
-_PLAYER_COLOR = pygame.Color(0, 0, 128)
+def get_position(shape):
+    positions = [(shape.y, shape.x), (shape.y, shape.x_m), (shape.y, shape.x_t)]
+    return positions
 
 
+def valid_space(shape, grid):
+    accepted_pos = [[(j, i) for j in range(6) if grid[i][j] == (0,0,0)] for i in range(13)]
+    accepted_pos = [j for sub in accepted_pos for j in sub]
 
-class AdventureGame:
-    def __init__(self):
-        # self._state = project5_faller.Faller()
-        self._running = True
-        self._falling = False
-        self._faller_created = False
+    formatted = get_position(shape)
+    for pos in formatted:
+        if pos not in accepted_pos:
+            if pos[1] > -1:
+                return False
+    return True
 
-    def run(self) -> None:
-        pygame.init()
+def get_faller():
+    return pm.Faller()
 
-        try:
-            clock = pygame.time.Clock()
+def draw_grid(surface, grid):
+    for i in range(len(grid)):
+        pygame.draw.line(surface, myline, (0, 0 + i*block_size), (0 + play_width, 0 + i*block_size))
+        for j in range(len(grid[i])):
+            pygame.draw.line(surface, myline, (0 + j*block_size, 0),(0 + j*block_size, 0 + play_height))
 
-            self._create_surface((_LENGTH_COLUMN, _LENGTH_ROW))
-            n = 0
-            while self._running:
-                clock.tick(_FRAME_RATE)
-                print(n)
-                n += 1
-                self._handle_events()
-                self._create_frame()
+def draw_window(surface, grid):
+    surface.fill((0, 0, 0))
+    sx = 0
+    sy = 0
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            pygame.draw.rect(surface, grid[i][j], (0 + j*block_size, 0 + i*block_size, block_size, block_size), 0)
 
-        finally:
-            pygame.quit()
+    pygame.draw.rect(surface, myviolet, (0, 0, 0 + play_width, 0 + play_height), 10)
+    draw_grid(surface, grid)
 
+def main(win):
+    locked_positions = {}
+    grid = create_grid(locked_positions)
 
-    def _create_surface(self, size: (int, int)) -> None:
-        self._surface = pygame.display.set_mode(size, pygame.RESIZABLE)
+    change_piece = False
+    run = True
+    c_player = get_faller()
+    n_player = get_faller()
+    clock = pygame.time.Clock()
+    fall_time = 0
+    fall_speed = 0.3
 
+    while run:
+        grid = create_grid(locked_positions)
+        fall_time += clock.get_rawtime()
+        clock.tick(30)
 
-    def _handle_events(self) -> None:
+        if fall_time/1000 > fall_speed:
+            fall_time = 0
+            c_player.x += 1
+            c_player.x_m = c_player.x - 1
+            c_player.x_t = c_player.x_m - 1
+            if not(valid_space(c_player, grid)) and c_player.x > 0:
+                c_player.x -= 1
+                c_player.x_m = c_player.x - 1
+                c_player.x_t = c_player.x_m - 1
+                change_piece = True
+
         for event in pygame.event.get():
-            self._handle_event(event)
-        self._handle_keys()
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.display.quit()
 
-    def _handle_event(self, event) -> None:
-        if event.type == pygame.QUIT:
-            self._stop_running()
-        elif event.type == pygame.VIDEORESIZE:
-            self._create_surface(event.size)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    c_player.y -= 1
+                    if not(valid_space(c_player, grid)):
+                        c_player.y += 1
+                if event.key == pygame.K_RIGHT:
+                    c_player.y += 1
+                    if not(valid_space(c_player, grid)):
+                        c_player.y -= 1
+                if event.key == pygame.K_SPACE:
+                    c_player.faller_rotate()
 
-    def _stop_running(self) -> None:
-        self._running = False
+        faller_pos = get_position(c_player)
 
-    def _handle_keys(self) -> None:
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            self._player.move_left()
-            print('left key')
-        if keys[pygame.K_RIGHT]:
-            self._player.move_right()
-            print('right key')
-        if keys[pygame.K_SPACE]:
-            self._player.rotate()
-            print('space key')
+        if c_player.x > -1:
+            grid[c_player.x][c_player.y] = c_player.color2
+        if c_player.x_m > -1:
+            grid[c_player.x_m][c_player.y] = c_player.color1
+        if c_player.x_t > -1:
+            grid[c_player.x_t][c_player.y] = c_player.color0
 
-    def _create_frame(self) -> None:
-        self._surface.fill(_BACKGROUND_COLOR)
-        self._create_faller()
-        self._falling_faller()
-        pygame.display.flip()
-
-    def _create_faller(self) -> None:
-        _MY_TOTAL_COLORS = (_COLOR1, _COLOR2, _COLOR3, _COLOR4, _COLOR5, _COLOR6, _COLOR7)
-        _COLORS = random.sample(_MY_TOTAL_COLORS, 3)
-        _COLUMN = random.sample(range(_NUM_COLUMN), 1)[0]
-
-        if self._falling == False:
-            self._player = pm.Faller()
-            print('self._player created')
-            print('color0 is ', self._player._c0)
-            print('self._faller_created is in _falling before change', self._faller_created)
-            self._faller_created = True
-
-
-    def _falling_faller(self):
-        if self._faller_created == True and (self._player._bottom_topleft[1] < (_NUM_ROW -1)/_NUM_ROW):
-            print('((_NUM_ROW-1)/_NUM_ROW) is ', ((_NUM_ROW-1)/_NUM_ROW))
-            print('self._player._bottom_topleft[1] is ', self._player._bottom_topleft[1])
-            print('self._faller_created is in _falling_faller', self._faller_created)
-            self._falling = True
-            bottom_topleft_frac_x, bottom_topleft_frac_y = self._player.bottom_topleft()
-            middle_topleft_frac_x, middle_topleft_frac_y = self._player.middle_topleft()
-            top_topleft_frac_x, top_topleft_frac_y = self._player.top_topleft()
-            width_frac = self._player.width()
-            height_frac = self._player.height()
-
-            bottom_topleft_pixel_x = self._frac_x_to_pixel_x(bottom_topleft_frac_x)
-            bottom_topleft_pixel_y = self._frac_y_to_pixel_y(bottom_topleft_frac_y)
-            middle_topleft_pixel_x = self._frac_x_to_pixel_x(middle_topleft_frac_x)
-            middle_topleft_pixel_y = self._frac_y_to_pixel_y(middle_topleft_frac_y)
-            top_topleft_pixel_x = self._frac_x_to_pixel_x(top_topleft_frac_x)
-            top_topleft_pixel_y = self._frac_y_to_pixel_y(top_topleft_frac_y)
-            width_pixel = self._frac_x_to_pixel_x(width_frac)
-            height_pixel = self._frac_y_to_pixel_y(height_frac)
-
-            player_rect2 = pygame.Rect(
-                bottom_topleft_pixel_x, bottom_topleft_pixel_y,
-                width_pixel, height_pixel)
-            player_rect1 = pygame.Rect(
-                middle_topleft_pixel_x, middle_topleft_pixel_y,
-                width_pixel, height_pixel)
-            player_rect0 = pygame.Rect(
-                top_topleft_pixel_x, top_topleft_pixel_y,
-                width_pixel, height_pixel)
-
-            pygame.draw.rect(self._surface, self._player._color2, player_rect2)
-            pygame.draw.rect(self._surface, self._player._color1, player_rect1)
-            pygame.draw.rect(self._surface, self._player._color0, player_rect0)
-            print('self._player.bottom_topleft() is ', self._player.bottom_topleft())
-            # if (not ((pygame.key.get_pressed()[pygame.K_LEFT] or pygame.key.get_pressed()[pygame.K_RIGHT]
-            #         or pygame.key.get_pressed()[pygame.K_SPACE]))):
-            self._player.natural_falling()
-        if(self._player._bottom_topleft[1] > 1):
-            self._faller_created = False
-            self._falling = False
-
-    def _frac_x_to_pixel_x(self, frac_x: float) -> int:
-        return self._frac_to_pixel(frac_x, self._surface.get_width())
-
-    def _frac_y_to_pixel_y(self, frac_y: float) -> int:
-        return self._frac_to_pixel(frac_y, self._surface.get_height())
-
-    def _frac_to_pixel(self, frac: float, max_pixel: int) -> int:
-        return int(frac * max_pixel)
-
+        if change_piece:
+            locked_positions[faller_pos[0]] = c_player.color2
+            locked_positions[faller_pos[1]] = c_player.color1
+            locked_positions[faller_pos[2]] = c_player.color0
+            c_player = n_player
+            n_player = get_faller()
+            change_piece = False
+        draw_window(win, grid)
+        pygame.display.update()
 
 if __name__ == '__main__':
-    AdventureGame().run()
+    pygame.init()
+    surface = pygame.display.set_mode((play_width, play_height))
+
+    run = True
+    try:
+        while run:
+            surface.fill((0,0,0))
+            pygame.display.update()
+            for event in pygame.event.get():
+                main(surface)
+    finally:
+        pygame.quit()
